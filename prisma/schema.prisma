@@ -1,0 +1,103 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../lib/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL") 
+}
+
+model User {
+  id        String   @id @default(uuid())
+  username  String   @unique
+  email     String   @unique
+  fullName  String
+  phone     String?
+  bio       String?
+  password  String
+  imageUrl  String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  role      Role     @default(USER)
+
+  following Follows[] @relation("following")
+  followers Follows[] @relation("followers")
+  posts     Post[]
+  likes     PostLike[]
+  comment   Comment[]
+  commentLike CommentLike[]
+}
+
+model Follows {
+  follower   User   @relation("following", fields: [followerId], references: [id])
+  followerId String
+
+  following   User   @relation("followers", fields: [followingId], references: [id])
+  followingId String
+
+  @@id([followerId, followingId])
+}
+
+model Post {
+  id        String @id @default(uuid())
+  userId    String
+  user      User   @relation(fields: [userId], references: [id])
+  mediaUrl String?
+  heading String
+  content String
+  slug String @unique
+  published Boolean @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  viewCount Int @default(0)
+
+  tags Tag[]
+  like PostLike[]
+  comment Comment[]
+}
+
+model PostLike {
+  id String @id @default(uuid())
+  userId String
+  postId String
+
+  user User @relation(fields: [userId], references: [id])
+  post Post @relation(fields: [postId], references: [id])
+}
+
+model Comment {
+  id String @id @default(uuid())
+  userId String
+  postId String
+  content String
+  parentId String?
+
+  comment Comment? @relation("CommentReplies", fields: [parentId], references: [id])
+  replies   Comment[] @relation("CommentReplies")
+
+  user User @relation(fields: [userId], references: [id])
+  post Post @relation(fields: [postId], references: [id])
+  likes CommentLike[]
+}
+
+model CommentLike {
+  id String @id @default(uuid())
+  userId String
+  commentId String
+  
+  user User @relation(fields: [userId], references: [id])
+  comment Comment @relation(fields: [commentId], references: [id])
+}
+
+model Tag {
+  id    String @id @default(uuid())
+  name  String @unique
+  slug  String @unique
+  posts Post[]
+}
+
+enum Role {
+  USER
+  ADMIN
+}
