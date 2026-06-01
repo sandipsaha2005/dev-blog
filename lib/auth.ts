@@ -1,11 +1,15 @@
 import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
-import GitHub from "next-auth/providers/github";
 import bcrypt from "bcryptjs";
 import { prisma } from "./prisma";
+import { authConfig } from "./auth.config";
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
+  ...authConfig,
+
   providers: [
+    ...authConfig.providers,
+
     Credentials({
       credentials: {
         email: {},
@@ -29,13 +33,13 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         return user;
       },
     }),
-
-    GitHub({}),
   ],
 
   session: { strategy: "jwt" },
 
   callbacks: {
+    ...authConfig.callbacks,
+
     async jwt({ token, user }) {
       if (user) {
         token.id = user.id;
