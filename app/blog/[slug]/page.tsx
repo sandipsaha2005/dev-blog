@@ -1,5 +1,6 @@
+import { cache } from "react"
 import { notFound } from "next/navigation"
-import type { Metadata, ResolvingMetadata } from 'next'
+import type { Metadata } from 'next'
 import { Container } from "@mui/material"
 import { prisma } from "@/lib/prisma"
 import BlogPostDetail from "@/components/blog/BlogPostDetail"
@@ -8,7 +9,6 @@ export const dynamicParams = true
 
 type Props = {
   params: Promise<{ slug: string }>
-  searchParams: Promise<{ [key: string]: string | string[] | undefined }>
 }
 
 export async function generateStaticParams() {
@@ -20,27 +20,8 @@ export async function generateStaticParams() {
   return blogs
 }
 
-export async function generateMetadata({ params, searchParams }: Props, parent: ResolvingMetadata): Promise<Metadata> {
-  const { slug } = await params;
-
-  const blog = await prisma.post.findUnique({
-    where: { slug },
-    select: {
-      heading: true,
-      content: true
-    }
-  });
-
-  return {
-    title: blog?.heading,
-    description: blog?.content
-  };
-}
-
-export default async function Page({ params }: { params: Promise<{ slug: string }> }) {
-  const { slug } = await params;
-
-  const blog = await prisma.post.findFirst({
+const getBlogs = cache(async (slug: string) => {
+  return prisma.post.findUnique({
     where: { slug, published: true },
     select: {
       id: true,
@@ -57,8 +38,32 @@ export default async function Page({ params }: { params: Promise<{ slug: string 
         },
       },
       tags: { select: { id: true, name: true, slug: true } },
-    },
+    }
   })
+})
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { slug } = await params;
+
+  const blog = await getBlogs(slug);
+
+  if (!blog) return { title: "Post not found" }
+
+  return {
+    title: blog?.heading,
+    description: blog?.content?.slice(0, 100),
+    openGraph: {
+      title: blog?.heading,
+      description: blog?.content?.slice(0, 100),
+      images: blog?.mediaUrl ? [blog.mediaUrl] : [],
+    }
+  };
+}
+
+export default async function Page({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params;
+
+  const blog = await getBlogs(slug);
 
   if (!blog) {
     notFound()
@@ -70,5 +75,3 @@ export default async function Page({ params }: { params: Promise<{ slug: string 
     </Container >
   )
 }
-
-

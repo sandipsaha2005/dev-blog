@@ -51,6 +51,30 @@ async function main() {
     ]
   })
 
+  await prisma.post.update({
+    where: {slug:"getting-started-nextjs-15"},
+    data: {
+      tags: {
+        connect: [
+          { slug: tags[0].slug },
+          { slug: tags[1].slug },
+        ]
+      }
+    }
+  })
+
+  await prisma.post.update({
+    where: { slug: "typescript-best-practices" },
+    data: {
+      tags: {
+        connect: [
+          { slug: tags[1].slug },
+          { slug: tags[2].slug }
+        ]
+      }
+    }
+  })
+
   console.log("Seeded successfully")
 }
 
