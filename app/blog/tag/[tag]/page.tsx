@@ -1,8 +1,10 @@
 import BlogCard from "@/components/blog/BlogCard";
 import { prisma } from "@/lib/prisma";
+import Link from "next/link"
 import { Button, Container, Stack, Typography } from "@mui/material";
-import { notFound } from "next/navigation";
 import { cache } from "react";
+
+export const revalidate = 60;
 
 const getBlogs = cache(async (tag: string) => {
   return prisma.post.findMany({
@@ -12,6 +14,7 @@ const getBlogs = cache(async (tag: string) => {
         some: { slug: tag }
       }
     },
+
     select: {
       id: true,
       slug: true,
@@ -33,9 +36,16 @@ const getBlogs = cache(async (tag: string) => {
 
 export const dynamicParams = true
 
+export async function generateStaticParams() {
+  const tags = await prisma.tag.findMany({
+    select: { slug: true }
+  })
+  return tags.map(tag => ({ tag: tag.slug }))
+}
+
 export default async function Page({ params }: { params: Promise<{ tag: string }> }) {
   const { tag } = await params;
-  const blogs = await getBlogs(tag)!;
+  const blogs = await getBlogs(tag);
   
   if (!blogs || blogs.length === 0) {
     return (
@@ -48,7 +58,9 @@ export default async function Page({ params }: { params: Promise<{ tag: string }
       <Stack spacing={3}>
         <Stack direction="row" sx={{ alignItems: 'center' }} spacing={2}>
           <Typography variant="h4">Posts tagged #{tag}</Typography>
-          <Button variant="text">Back</Button>
+          <Button variant="text" component={Link} href="/blog">
+            Back
+          </Button>
         </Stack>
         {blogs?.map(blog => (
           <BlogCard key={blog.id} post={blog} />
