@@ -9,15 +9,16 @@ import {
 } from "@mui/material"
 import { register } from "@/lib/actions/auth"
 import { ChangeEvent, SubmitEvent, useState } from "react"
+import { useRouter } from "next/navigation"
 
 export default function RegisterPage() {
-
+  const router = useRouter();
   const [state, setState] = useState({
     username: "",
     fullName: "",
     email: "",
     password: "",
-    confPassword: ""
+    confirmPassword: ""
   })
 
   const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
@@ -32,14 +33,17 @@ export default function RegisterPage() {
   const handleSubmit = async (e: SubmitEvent) => {
     e.preventDefault();
 
-    if (state.password != state.confPassword) {
+    if (state.password !== state.confirmPassword) {
       alert("Password doesn't match with Confirm password");
       return;
     }
 
-    const res = await register(state);
-
-    console.log({ res });
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { confirmPassword, ...payload } = state;
+    const res = await register(payload);
+    if (res.success) {
+      return router.push("/login");
+    }
   }
 
   return (
@@ -57,6 +61,7 @@ export default function RegisterPage() {
             value={state.username}
             name="username"
             onChange={handleChange}
+            required
           />
           <TextField
             label="Full name"
@@ -64,6 +69,7 @@ export default function RegisterPage() {
             value={state.fullName}
             name="fullName"
             onChange={handleChange}
+            required
           />
           <TextField
             label="Email"
@@ -72,6 +78,7 @@ export default function RegisterPage() {
             value={state.email}
             name="email"
             onChange={handleChange}
+            required
           />
           <TextField
             label="Password"
@@ -80,13 +87,15 @@ export default function RegisterPage() {
             value={state.password}
             name="password"
             onChange={handleChange}
+            required
           />
           <TextField
             label="Confirm password"
             type="password"
             fullWidth
-            value={state.confPassword}
-            name="confPassword"
+            value={state.confirmPassword}
+            name="confirmPassword"
+            required
             onChange={handleChange}
           />
           <Button variant="contained" size="large" fullWidth type="submit">Register</Button>

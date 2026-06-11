@@ -1,7 +1,9 @@
 "use server"
 
 import { hash } from 'bcryptjs';
+import { CredentialsSignin } from 'next-auth';
 import { prisma } from "../prisma";
+import { signIn } from '../auth';
 
 type RegisterPayload = {
   username: string,
@@ -9,6 +11,11 @@ type RegisterPayload = {
   email: string,
   password: string,
 };
+
+type LoginPayload = {
+  email: string,
+  password: string
+}
 
 export const register = async (payload: RegisterPayload) => {
 
@@ -28,14 +35,37 @@ export const register = async (payload: RegisterPayload) => {
 
   const hashedPassword = await hash(payload.password, 12); 
 
-  await prisma.user.create({
-    data: {
-      username: payload.username,
-      fullName: payload.fullName,
-      email: payload.email,
-      password: hashedPassword
-    }
-  });
+  try {
+    await prisma.user.create({
+      data: {
+        username: payload.username,
+        fullName: payload.fullName,
+        email: payload.email,
+        password: hashedPassword
+      }
+    });
+    
+    return { success: true, message: "User created successfully" };
+  } catch (error) {
+    return {success: false, message: error}    
+  }
+};
 
-  return { success: true, message: "User created successfully" };
+export const login = async (payload: LoginPayload) => {
+  try {
+    await signIn("credentials", {
+      email: payload.email,
+      password: payload.password,
+      redirect: false,
+      redirectTo: "/dashboard",
+    });
+
+    return { success: true, message: "Login successful" };
+  } catch (error) {
+    if (error instanceof CredentialsSignin) {
+      return { success: false, message: "This user doesn't exist" };
+    }
+
+    return { success: false, message: "Invalid email or password" };
+  }
 };
