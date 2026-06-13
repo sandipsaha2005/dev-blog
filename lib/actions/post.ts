@@ -1,17 +1,16 @@
 "use server"
 
 import { auth } from "@/lib/auth"
+import { revalidatePath } from "next/cache";
 import { prisma } from "../prisma";
 import { randomBytes } from "crypto";
-
-
 
 type PostPayload = {
   heading: string,
   mediaUrl?: string,
   content: string,
   published?: boolean, 
-  tags: string[]
+  tags: string[],
 }
 
 export const createPost = async (payload: PostPayload) => {
@@ -26,7 +25,7 @@ export const createPost = async (payload: PostPayload) => {
     await prisma.post.create({
       data: {
         heading: payload.heading,
-        mediaUrl: payload.mediaUrl,
+        mediaUrl: undefined,
         content: payload.content,
         published:payload.published ?? false,
         slug,
@@ -36,7 +35,13 @@ export const createPost = async (payload: PostPayload) => {
           }
         },
         tags: {
-          connect: payload.tags.map(slug => ({ slug }))
+          connectOrCreate: payload.tags.map(tag => ({
+            where: { slug: tag.toLowerCase().replace(/\s+/g, '-') },
+            create: {
+              name: tag.trim(),
+              slug: tag.toLowerCase().replace(/\s+/g, '-')
+            }
+          }))
         }
       }
     })
@@ -51,3 +56,38 @@ export const createPost = async (payload: PostPayload) => {
     return { success: false, message: error };   
   }
 }
+
+export const updatePost = async (payload: PostPayload & {id: string}) => {
+  
+  
+}
+
+export const deletePost = async (postId: string) => {
+  const session = await auth();
+
+  if (!session?.user) {
+    throw new Error("Unauthorized");
+  }
+
+  const post = await prisma.post.findUnique({
+    where: {
+      id: postId,
+      userId: session.user.id
+    }
+  })
+
+  if (!post) {
+    throw new Error("Something went wrong");  
+  }
+
+  await prisma.post.deleteMany({
+    where: {
+      id: postId,
+      userId: session.user.id,
+    },
+  });
+
+  revalidatePath(`/blog/${post?.id}`)
+  revalidatePath("/dashboard");
+  revalidatePath("/blog");
+};
