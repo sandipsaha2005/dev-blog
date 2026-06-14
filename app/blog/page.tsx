@@ -1,4 +1,4 @@
-import BlogCard from "@/components/blog/BlogCard"
+import BlogItem from "@/components/blog/BlogItem"
 import { prisma } from "@/lib/prisma"
 import { Container, Stack, Typography } from "@mui/material"
 
@@ -33,7 +33,7 @@ const BlogPage = async () => {
       ) : (
         <Stack spacing={2}>
           {blogs.map((post) => (
-            <BlogCard key={post.id} post={post} />
+            <BlogItem key={post.id} post={post} />
           ))}
         </Stack>
       )}

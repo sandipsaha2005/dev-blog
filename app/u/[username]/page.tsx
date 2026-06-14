@@ -1,4 +1,4 @@
-import BlogCard from "@/components/blog/BlogCard";
+import BlogItem from "@/components/blog/BlogItem";
 import { prisma } from "@/lib/prisma";
 import { Container, Stack, Typography } from "@mui/material";
 import { notFound } from "next/navigation";
@@ -72,7 +72,7 @@ export default async function page({ params }: { params: Promise<{ username: str
         ) : (
 
           blogs.map((post) => (
-            <BlogCard key={post.id} post={post} />
+            <BlogItem key={post.id} post={post} />
           ))
         )}
       </Stack>

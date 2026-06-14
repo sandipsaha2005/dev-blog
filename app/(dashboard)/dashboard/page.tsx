@@ -1,8 +1,9 @@
-import  { BlogCardDetailed } from "@/components/blog/BlogCard";
+import { BlogItemDetailed } from "@/components/blog/BlogItem";
 import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/prisma";
 import { Box, Button, Container, Stack, Typography } from "@mui/material";
 import Link from "next/link";
+
 
 export default async function page() {
   const session = await auth();
@@ -31,7 +32,7 @@ export default async function page() {
 
   return (
     <Container maxWidth="md" sx={{ py: 4 }}>
-      <Box sx={{ display: "flex", justifyContent: "space-between",mb:4 }}>
+      <Box sx={{ display: "flex", justifyContent: "space-between", mb: 4 }}>
         <Typography>
           Your blogs are  {session!.user.email}
         </Typography>
@@ -46,7 +47,7 @@ export default async function page() {
       ) : (
         <Stack spacing={2}>
           {posts.map((post) => (
-            <BlogCardDetailed key={post.id} post={post} /> // change it with more detailed component. (draft, published or not)
+            <BlogItemDetailed key={post.id} post={post} /> // change it with more detailed component. (draft, published or not)
           ))}
         </Stack>
       )}

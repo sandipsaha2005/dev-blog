@@ -3,7 +3,7 @@ import { notFound } from "next/navigation"
 import type { Metadata } from 'next'
 import { Container } from "@mui/material"
 import { prisma } from "@/lib/prisma"
-import BlogPostDetail from "@/components/blog/BlogPostDetail"
+import BlogCard from "@/components/blog/BlogCard"
 
 export const dynamicParams = true
 
@@ -71,7 +71,7 @@ export default async function Page({ params }: { params: Promise<{ slug: string 
 
   return (
     <Container sx={{ py: 4, maxWidth: "md" }}>
-      <BlogPostDetail post={blog} />
+      <BlogCard post={blog} />
     </Container >
   )
 }

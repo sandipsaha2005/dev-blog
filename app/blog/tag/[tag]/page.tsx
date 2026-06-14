@@ -1,4 +1,4 @@
-import BlogCard from "@/components/blog/BlogCard";
+import BlogItem from "@/components/blog/BlogItem";
 import { prisma } from "@/lib/prisma";
 import Link from "next/link"
 import { Button, Container, Stack, Typography } from "@mui/material";
@@ -46,7 +46,7 @@ export async function generateStaticParams() {
 export default async function Page({ params }: { params: Promise<{ tag: string }> }) {
   const { tag } = await params;
   const blogs = await getBlogs(tag);
-  
+
   if (!blogs || blogs.length === 0) {
     return (
       <Typography>No Blogs found for tag #{tag}</Typography>
@@ -63,7 +63,7 @@ export default async function Page({ params }: { params: Promise<{ tag: string }
           </Button>
         </Stack>
         {blogs?.map(blog => (
-          <BlogCard key={blog.id} post={blog} />
+          <BlogItem key={blog.id} post={blog} />
         ))}
       </Stack>
     </Container >

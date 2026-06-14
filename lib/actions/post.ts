@@ -46,7 +46,6 @@ export const createPost = async (payload: PostPayload) => {
       }
     })
 
-    
     return { success: true, message: "Post created" };
   } catch (error: unknown) {
     if (error instanceof Error) {
@@ -57,9 +56,57 @@ export const createPost = async (payload: PostPayload) => {
   }
 }
 
-export const updatePost = async (payload: PostPayload & {id: string}) => {
-  
-  
+export const updatePost = async (payload: PostPayload & {id: string, slug: string}) => {
+  const session = await auth();
+  if (!session?.user) throw new Error("Unauthorized");
+
+  const tags = payload.tags.map(tag => tag.trim()).filter(Boolean).map(tag => ({
+    name: tag,
+    slug: tag.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, ""),
+  }))
+
+  await prisma.$transaction(async (tx) => {
+    await tx.post.update({
+      where: {
+        id: payload.id,
+        userId: session.user.id
+      },
+      data: {
+        heading: payload.heading,
+        mediaUrl: payload.mediaUrl,
+        content: payload.content,
+        published: payload.published,
+        tags: {
+          set: []
+        }
+      }
+    })
+
+
+    await tx.post.update({
+      where: {
+        id: payload.id,
+        userId: session.user.id
+      },
+
+      data: {
+        heading: payload.heading,
+        mediaUrl: payload.mediaUrl,
+        content: payload.content,
+        published: payload.published,
+        tags: {
+          connectOrCreate: tags.map(tag => ({
+            where: { slug: tag.slug },
+            create: tag
+          }))
+        }
+      }
+    })
+  })
+
+  revalidatePath("/blog");
+  revalidatePath(`/blog/${payload.slug}`);
+  revalidatePath("/dashboard");
 }
 
 export const deletePost = async (postId: string) => {
