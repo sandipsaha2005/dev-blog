@@ -24,6 +24,7 @@ export type BlogPostListItem = {
   mediaUrl: string | null;
   createdAt: Date;
   slug: string;
+  viewCount: number;
   user: {
     username: string;
     fullName: string;
@@ -71,7 +72,6 @@ export function BlogItemDetailed({ post }: { post: BlogPostListItem & { publishe
   const tags = formValues.tags.split(",");
 
   const handleEdit = async () => {
-    setIsEditing((prev) => !prev);
     const payload = {
       id: post.id,
       heading: formValues.heading,
@@ -81,8 +81,10 @@ export function BlogItemDetailed({ post }: { post: BlogPostListItem & { publishe
       tags, 
       slug: post.slug,
     };
-
+    
     await updatePost(payload);
+
+    setIsEditing((prev) => !prev);
   };
 
   const buttons = (

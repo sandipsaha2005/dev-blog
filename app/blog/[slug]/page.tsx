@@ -4,6 +4,8 @@ import type { Metadata } from 'next'
 import { Container } from "@mui/material"
 import { prisma } from "@/lib/prisma"
 import BlogCard from "@/components/blog/BlogCard"
+import ViewTracker from "@/components/shared/ViewTracker"
+import { auth } from "@/lib/auth"
 
 export const dynamicParams = true
 
@@ -17,7 +19,7 @@ export async function generateStaticParams() {
     select: { slug: true },
   })
 
-  return blogs
+  return blogs;
 }
 
 const getBlogs = cache(async (slug: string) => {
@@ -30,6 +32,12 @@ const getBlogs = cache(async (slug: string) => {
       content: true,
       mediaUrl: true,
       createdAt: true,
+      viewCount: true,
+      like: {
+        select: {
+          userId: true
+        }
+      },
       user: {
         select: {
           fullName: true,
@@ -63,15 +71,29 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function Page({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
 
+  const session = await auth();
+  if (!session?.user) throw new Error("Unauthorized");
+
   const blog = await getBlogs(slug);
 
+  const [likeCount, userLike] = await Promise.all([
+    prisma.postLike.count({
+      where: { postId: blog?.id }
+    }),
+
+    prisma.postLike.findFirst({
+      where: { postId: blog?.id, userId: session.user.id }
+    })
+  ])
+
   if (!blog) {
-    notFound()
+    notFound();
   }
 
   return (
     <Container sx={{ py: 4, maxWidth: "md" }}>
-      <BlogCard post={blog} />
+      <ViewTracker slug={slug} />
+      <BlogCard post={blog} likeProp={{ count: likeCount, isLiked: !!userLike }} />
     </Container >
   )
 }

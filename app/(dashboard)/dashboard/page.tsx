@@ -21,6 +21,7 @@ export default async function page() {
       mediaUrl: true,
       createdAt: true,
       published: true,
+      viewCount: true,
       user: {
         select: { username: true, imageUrl: true, fullName: true },
       },

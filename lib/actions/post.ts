@@ -65,6 +65,10 @@ export const updatePost = async (payload: PostPayload & {id: string, slug: strin
     slug: tag.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, ""),
   }))
 
+  const uid = randomBytes(4).toString("hex");
+  const slug = `${payload.heading.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')}-${uid}`;
+
+
   await prisma.$transaction(async (tx) => {
     await tx.post.update({
       where: {
@@ -72,10 +76,7 @@ export const updatePost = async (payload: PostPayload & {id: string, slug: strin
         userId: session.user.id
       },
       data: {
-        heading: payload.heading,
-        mediaUrl: payload.mediaUrl,
-        content: payload.content,
-        published: payload.published,
+      
         tags: {
           set: []
         }
@@ -94,6 +95,7 @@ export const updatePost = async (payload: PostPayload & {id: string, slug: strin
         mediaUrl: payload.mediaUrl,
         content: payload.content,
         published: payload.published,
+        slug,
         tags: {
           connectOrCreate: tags.map(tag => ({
             where: { slug: tag.slug },
@@ -116,17 +118,6 @@ export const deletePost = async (postId: string) => {
     throw new Error("Unauthorized");
   }
 
-  const post = await prisma.post.findUnique({
-    where: {
-      id: postId,
-      userId: session.user.id
-    }
-  })
-
-  if (!post) {
-    throw new Error("Something went wrong");  
-  }
-
   await prisma.post.deleteMany({
     where: {
       id: postId,
@@ -134,7 +125,38 @@ export const deletePost = async (postId: string) => {
     },
   });
 
-  revalidatePath(`/blog/${post?.id}`)
+  revalidatePath(`/blog/${postId}`) // should be slug
   revalidatePath("/dashboard");
   revalidatePath("/blog");
 };
+
+export const likePost = async (postId: string) => {
+  const session = await auth();
+
+  if (!session?.user) {
+    throw new Error("Unauthorized");
+  }
+
+  await prisma.postLike.create({
+    data: {
+      userId: session.user.id,
+      postId
+    }
+  });
+
+  revalidatePath(`/blog/${postId}`); // should be slug
+}
+
+export const disLikePost = async (postId: string) => {
+  const session = await auth();
+
+  if (!session?.user) {
+    throw new Error("Unauthorized");
+  }
+
+  await prisma.postLike.deleteMany({
+    where: { postId, userId: session.user.id }
+  });
+
+  revalidatePath(`/blog/${postId}`); // should be slug
+}

@@ -8,14 +8,19 @@ import {
   Typography,
 } from "@mui/material"
 import type { BlogPostListItem } from "@/components/blog/BlogItem"
+import { LikeButton } from "../shared/LikeButton"
 
 export type BlogPostDetailItem = BlogPostListItem & { slug: string }
 
 type BlogPostDetailProps = {
-  post: BlogPostDetailItem
+  post: BlogPostDetailItem,
+  likeProp: {
+    count: number,
+    isLiked: boolean,
+  }
 }
 
-export default function BlogCard({ post }: BlogPostDetailProps) {
+export default function BlogCard({ post, likeProp }: BlogPostDetailProps) {
   const date = new Date(post.createdAt).toLocaleDateString(undefined, {
     year: "numeric",
     month: "short",
@@ -74,6 +79,17 @@ export default function BlogCard({ post }: BlogPostDetailProps) {
           ))}
         </Stack>
       )}
+
+      <Box sx={{display:'flex', gap: 4, alignItems:"center"}}>
+        <LikeButton
+          isLiked={likeProp.isLiked}
+          count={likeProp.count}
+          id={post.id}
+        />
+        <Typography variant="body1" sx={{ whiteSpace: "pre-wrap" }}>
+          views {post.viewCount}
+        </Typography>
+      </Box>
     </Stack>
   )
 }
