@@ -9,12 +9,16 @@ type LikeButtonProps = {
   isLiked?: boolean;
   count?: number;
   id: string;
+  likeFn: (id: string) => Promise<void>;
+  disLikeFn: (id: string) =>Promise<void>;
 };
 
 export const LikeButton = ({
   isLiked = false,
   count = 0,
   id,
+  likeFn,
+  disLikeFn
 }: LikeButtonProps) => {
   const [optimisticState, addOptimistic] = useOptimistic(
     { count, isLiked },
@@ -29,9 +33,9 @@ export const LikeButton = ({
       addOptimistic(null);
 
       if (optimisticState.isLiked) {
-        await disLikePost(id);
+        await disLikeFn(id);
       } else {
-        await likePost(id)
+        await likeFn(id)
       }
     })
   };

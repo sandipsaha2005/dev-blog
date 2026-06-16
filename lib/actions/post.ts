@@ -9,7 +9,7 @@ type PostPayload = {
   heading: string,
   mediaUrl?: string,
   content: string,
-  published?: boolean, 
+  published?: boolean,
   tags: string[],
 }
 
@@ -17,7 +17,7 @@ export const createPost = async (payload: PostPayload) => {
   const session = await auth();
   if (!session?.user) throw new Error("Unauthorized");
   // slug generation depends on heading so what happens if there are same heading for multiple posts.
-  
+
   const uid = randomBytes(4).toString("hex");
   const slug = `${payload.heading.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')}-${uid}`;
 
@@ -27,7 +27,7 @@ export const createPost = async (payload: PostPayload) => {
         heading: payload.heading,
         mediaUrl: undefined,
         content: payload.content,
-        published:payload.published ?? false,
+        published: payload.published ?? false,
         slug,
         user: {
           connect: {
@@ -52,11 +52,11 @@ export const createPost = async (payload: PostPayload) => {
       return { success: false, message: error.message };
     }
 
-    return { success: false, message: error };   
+    return { success: false, message: error };
   }
 }
 
-export const updatePost = async (payload: PostPayload & {id: string, slug: string}) => {
+export const updatePost = async (payload: PostPayload & { id: string, slug: string }) => {
   const session = await auth();
   if (!session?.user) throw new Error("Unauthorized");
 
@@ -76,7 +76,7 @@ export const updatePost = async (payload: PostPayload & {id: string, slug: strin
         userId: session.user.id
       },
       data: {
-      
+
         tags: {
           set: []
         }
@@ -160,3 +160,19 @@ export const disLikePost = async (postId: string) => {
 
   revalidatePath(`/blog/${postId}`); // should be slug
 }
+
+export const createComment = async (payload: { content: string, postId: string, parentId: string | undefined }) => {
+  const session = await auth();
+  if(!session?.user) throw new Error("Unauthorized");
+  
+  await prisma.comment.create({
+    data: {
+      userId: session.user.id,
+      postId: payload.postId,
+      content: payload.content,
+      parentId: payload.parentId,
+    }
+  })
+
+  // revalidatePath(`/blog/${payload.}`);
+};

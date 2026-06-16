@@ -6,6 +6,7 @@ import { prisma } from "@/lib/prisma"
 import BlogCard from "@/components/blog/BlogCard"
 import ViewTracker from "@/components/shared/ViewTracker"
 import { auth } from "@/lib/auth"
+import { buildCommentTree } from "@/lib/helper/commentTree"
 
 export const dynamicParams = true
 
@@ -86,6 +87,29 @@ export default async function Page({ params }: { params: Promise<{ slug: string 
     })
   ])
 
+  const comments = await prisma.comment.findMany({
+    where: { postId: blog?.id },
+    select: {
+      userId: true,
+      content: true,
+      id: true,
+      parentId: true,
+      user: {
+        select: {
+          id: true,
+          username: true,
+          imageUrl: true,
+          fullName: true
+        }
+      }
+    }
+  });
+
+  const commentTree = buildCommentTree(comments);
+
+  console.log({commentTree});
+  
+  
   if (!blog) {
     notFound();
   }
@@ -93,7 +117,7 @@ export default async function Page({ params }: { params: Promise<{ slug: string 
   return (
     <Container sx={{ py: 4, maxWidth: "md" }}>
       <ViewTracker slug={slug} />
-      <BlogCard post={blog} likeProp={{ count: likeCount, isLiked: !!userLike }} />
+      <BlogCard post={blog} likeProp={{ count: likeCount, isLiked: !!userLike }} comments={commentTree}/>
     </Container >
   )
 }
