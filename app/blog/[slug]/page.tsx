@@ -109,7 +109,6 @@ export default async function Page({ params }: { params: Promise<{ slug: string 
 
   console.log({commentTree});
   
-  
   if (!blog) {
     notFound();
   }
@@ -121,3 +120,8 @@ export default async function Page({ params }: { params: Promise<{ slug: string 
     </Container >
   )
 }
+
+
+
+
+// just a comment

@@ -2,5 +2,7 @@
   "prisma.pinToPrisma6": true,
   "files.autoSave": "afterDelay",
   "editor.autoIndentOnPaste": true,
-  "editor.fontFamily": "'JetBrains Mono',  Consolas, 'Courier New', monospace"
+  "editor.fontFamily": "'JetBrains Mono'",
+  "editor.fontSize": 15,
+  "editor.formatOnSave": true
 }
